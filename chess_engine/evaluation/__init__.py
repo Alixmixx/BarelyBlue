@@ -19,6 +19,6 @@ Data Flow:
 """
 
 from chess_engine.evaluation.base import Evaluator
-# from chess_engine.evaluation.classical import ClassicalEvaluator
+from chess_engine.evaluation.classical import ClassicalEvaluator
 
-__all__ = ['Evaluator']  # ClassicalEvaluator will be added in next commit
+__all__ = ['Evaluator', 'ClassicalEvaluator']

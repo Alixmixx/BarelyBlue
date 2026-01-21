@@ -2,6 +2,10 @@
 
 ---
 
+## 2026-01-21: Classical piece-square table evaluator
+
+Implemented traditional evaluation using material counting and piece-square tables. Material values: P=100, N=320, B=330, R=500, Q=900. PSTs provide positional bonuses (e.g., central knights are stronger, edge knights weaker). This becomes the baseline evaluator for the classical engine. This was possible thanks to this amazing chess wiki page: [Simplified Evaluation Function](https://www.chessprogramming.org/Simplified_Evaluation_Function)
+
 ## 2026-01-21: Abstract evaluator interface
 
 Created abstract base class for position evaluators. Defines evaluate() method that returns centipawns from White's perspective. Includes helper methods for terminal position detection (checkmate, draws). This interface allows swapping between classical and neural evaluators without touching search code.
