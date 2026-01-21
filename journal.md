@@ -2,6 +2,10 @@
 
 ---
 
+## 2026-01-21: Minimax search with alpha-beta pruning and transposition tables
+
+Implemented core search algorithm using minimax with alpha-beta pruning to dramatically reduce nodes explored. Added transposition table using Zobrist hashing to cache previously evaluated positions. Move ordering (captures first, then checks, then quiet moves) improves pruning efficiency. Expected performance: depth 4-5 in 1-3 seconds.
+
 ## 2026-01-21: Classical piece-square table evaluator
 
 Implemented traditional evaluation using material counting and piece-square tables. Material values: P=100, N=320, B=330, R=500, Q=900. PSTs provide positional bonuses (e.g., central knights are stronger, edge knights weaker). This becomes the baseline evaluator for the classical engine. This was possible thanks to this amazing chess wiki page: [Simplified Evaluation Function](https://www.chessprogramming.org/Simplified_Evaluation_Function)
