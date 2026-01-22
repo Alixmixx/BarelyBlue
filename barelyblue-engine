@@ -5,7 +5,7 @@
 # Get the directory where this script is located
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# Activate virtual environment and run engine
+# Activate virtual environment and run engine with unbuffered output
 source "$DIR/.venv/bin/activate"
 cd "$DIR"
-python3 -m chess_engine.uci
+python3 -u -m chess_engine.uci

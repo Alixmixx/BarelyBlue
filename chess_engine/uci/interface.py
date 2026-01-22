@@ -27,10 +27,42 @@ References:
 import chess
 import sys
 import threading
+import logging
+from pathlib import Path
 from typing import Optional
 from chess_engine.search.minimax import find_best_move
 from chess_engine.search.transposition import TranspositionTable
 from chess_engine.evaluation.classical import ClassicalEvaluator
+
+
+def setup_logger(debug=True):
+    """
+    Setup file-based logger for UCI debugging.
+
+    Args:
+        debug: If True, log at DEBUG level; otherwise INFO level
+
+    Returns:
+        Configured logger instance
+    """
+    log_dir = Path.home() / ".barelyblue"
+    log_dir.mkdir(exist_ok=True)
+    log_file = log_dir / "engine.log"
+
+    logger = logging.getLogger("barelyblue")
+    logger.setLevel(logging.DEBUG if debug else logging.INFO)
+
+    logger.handlers.clear()
+
+    handler = logging.FileHandler(log_file, mode='w')
+    formatter = logging.Formatter(
+        '%(asctime)s [%(levelname)s] %(message)s',
+        datefmt='%H:%M:%S'
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+    return logger
 
 
 class UCIEngine:
@@ -58,13 +90,14 @@ class UCIEngine:
         handle_quit: Shutdown engine
     """
 
-    def __init__(self, evaluator=None, tt_size=10000000):
+    def __init__(self, evaluator=None, tt_size=10000000, debug=True):
         """
         Initialize UCI engine.
 
         Args:
             evaluator: Position evaluator (default: ClassicalEvaluator)
             tt_size: Transposition table size in entries (default: 10M)
+            debug: Enable debug logging (default: True)
         """
         self.board = chess.Board()
         self.evaluator = evaluator if evaluator else ClassicalEvaluator()
@@ -79,6 +112,10 @@ class UCIEngine:
         self.name = "BarelyBlue"
         self.version = "1.0"
         self.author = "Alix Muller"
+
+        self.logger = setup_logger(debug=debug)
+        self.logger.info("=== BarelyBlue Engine Started ===")
+        self.logger.info(f"Log file: {Path.home() / '.barelyblue' / 'engine.log'}")
 
     def run(self):
         """
@@ -103,6 +140,8 @@ class UCIEngine:
 
                 if not command:
                     continue
+
+                self.logger.debug(f">>> {command}")
 
                 # Parse command
                 tokens = command.split()
@@ -133,11 +172,13 @@ class UCIEngine:
 
                 else:
                     # Unknown command - UCI spec says to ignore
-                    pass
+                    self.logger.debug(f"Unknown command ignored: {command}")
 
             except EOFError:
+                self.logger.info("EOF received, shutting down")
                 break
             except Exception as e:
+                self.logger.error(f"Command error: {e}", exc_info=True)
                 print(f"# Error: {e}", file=sys.stderr)
 
     def handle_uci(self):
@@ -149,24 +190,37 @@ class UCIEngine:
             id author Alix Muller
             uciok
         """
+        self.logger.info("Handling: uci")
+
         print(f"id name {self.name} {self.version}")
         print(f"id author {self.author}")
 
-        # TODO: Add engine options here
+        # Send UCI options (at least one required for protocol compliance)
+        print("option name Hash type spin default 16 min 1 max 1024")
 
         print("uciok")
+        sys.stdout.flush()
+
+        self.logger.debug(f"<<< id name {self.name} {self.version}")
+        self.logger.debug(f"<<< id author {self.author}")
+        self.logger.debug("<<< option name Hash type spin default 16 min 1 max 1024")
+        self.logger.debug("<<< uciok")
 
     def handle_isready(self):
         """
         Handle 'isready' command - synchronization.
-        
+
         Response:
             readyok
         """
+        self.logger.info("Handling: isready")
         print("readyok")
+        sys.stdout.flush()
+        self.logger.debug("<<< readyok")
 
     def handle_ucinewgame(self):
         """Handle 'ucinewgame' command - reset for new game."""
+        self.logger.info("Handling: ucinewgame - resetting board and transposition table")
 
         self.board = chess.Board()
         self.transposition_table.clear()
@@ -185,7 +239,10 @@ class UCIEngine:
         Args:
             tokens: Command tokens (e.g., ['position', 'startpos', 'moves', 'e2e4'])
         """
+        self.logger.info(f"Handling: position {' '.join(tokens[1:])}")
+
         if len(tokens) < 2:
+            self.logger.warning("Position command with insufficient arguments")
             return
 
         # Parse position type
@@ -203,25 +260,39 @@ class UCIEngine:
 
             try:
                 self.board = chess.Board(fen)
+                self.logger.debug(f"Set position from FEN: {fen}")
             except ValueError as e:
+                self.logger.error(f"Invalid FEN: {e}")
                 print(f"# Invalid FEN: {e}", file=sys.stderr)
                 return
         else:
+            self.logger.warning(f"Unknown position type: {tokens[1]}")
             return
 
         # Apply moves
         if move_index < len(tokens) and tokens[move_index] == "moves":
+            moves_applied = []
             for move_str in tokens[move_index + 1:]:
                 try:
                     move = chess.Move.from_uci(move_str)
                     if move in self.board.legal_moves:
                         self.board.push(move)
+                        moves_applied.append(move_str)
                     else:
+                        self.logger.error(f"Illegal move: {move_str}")
                         print(f"# Illegal move: {move_str}", file=sys.stderr)
                         break
                 except ValueError as e:
+                    self.logger.error(f"Invalid move format: {move_str} - {e}")
                     print(f"# Invalid move format: {move_str} - {e}", file=sys.stderr)
                     break
+
+            if moves_applied:
+                self.logger.debug(f"Applied moves: {' '.join(moves_applied)}")
+
+        fen = self.board.fen()
+        self.logger.info(f"Position updated: {fen[:60]}{'...' if len(fen) > 60 else ''}")
+        self.logger.debug(f"Full FEN: {fen}")
 
     def handle_go(self, tokens):
         """
@@ -236,6 +307,8 @@ class UCIEngine:
         Args:
             tokens: Command tokens (e.g., ['go', 'depth', '5'])
         """
+        self.logger.info(f"Handling: go {' '.join(tokens[1:])}")
+
         depth = None
         movetime = None
         wtime = None
@@ -265,18 +338,28 @@ class UCIEngine:
 
         if depth is None:
             depth = 5  # default depth
+            self.logger.debug("No depth specified, using default depth 5")
 
         # TODO: Implement time management
+        if movetime:
+            self.logger.debug(f"movetime parameter: {movetime} ms (not yet implemented)")
+        if wtime and btime:
+            self.logger.debug(f"Time controls: wtime={wtime} ms, btime={btime} ms (not yet implemented)")
+
+        self.logger.info(f"Starting search thread with depth={depth}")
+
+        # Make a copy of the board for the search thread to avoid race conditions
+        board_copy = self.board.copy()
 
         self.stop_search = False
         self.searching = True
         self.search_thread = threading.Thread(
             target=self._search_thread,
-            args=(depth,)
+            args=(depth, board_copy)
         )
         self.search_thread.start()
 
-    def _search_thread(self, depth: int):
+    def _search_thread(self, depth: int, board: chess.Board):
         """
         Background thread for search.
 
@@ -284,33 +367,80 @@ class UCIEngine:
 
         Args:
             depth: Search depth
+            board: Copy of the board to search
 
         Output:
             info depth X score cp Y nodes Z
             bestmove <move>
         """
+        import time
+        start_time = time.time()
+
         try:
-            best_move, score = find_best_move(
-                self.board,
+            fen = board.fen()
+            self.logger.info(f"Search started: depth={depth}, position={fen[:50]}{'...' if len(fen) > 50 else ''}")
+            self.logger.debug(f"Full FEN: {fen}")
+
+            best_move, score, nodes_searched, pv = find_best_move(
+                board,
                 depth,
                 self.evaluator,
                 self.transposition_table,
             )
 
+            elapsed_ms = int((time.time() - start_time) * 1000)
+            self.logger.info(f"Search complete: best_move={best_move.uci() if best_move else 'None'}, score={score:.2f}, nodes={nodes_searched}, time={elapsed_ms}ms")
+
             # Send result
             if not self.stop_search:
-                print(f"info depth {depth} score cp {int(score)}")
-                print(f"bestmove {best_move.uci()}")
+                if best_move:
+                    # Build complete UCI info string with all required fields
+                    info_parts = [
+                        "info",
+                        f"depth {depth}",
+                        f"seldepth {depth}",
+                        f"score cp {int(score)}",
+                        f"nodes {nodes_searched}",
+                        f"time {elapsed_ms}",
+                    ]
+
+                    if pv and len(pv) > 0:
+                        pv_moves = " ".join([m.uci() for m in pv])
+                        info_parts.append(f"pv {pv_moves}")
+
+                    info_msg = " ".join(info_parts)
+                    bestmove_msg = f"bestmove {best_move.uci()}"
+
+                    print(info_msg)
+                    print(bestmove_msg)
+                    sys.stdout.flush()
+
+                    self.logger.debug(f"<<< {info_msg}")
+                    self.logger.debug(f"<<< {bestmove_msg}")
+                else:
+                    self.logger.error("Search returned None for best_move!")
+            else:
+                self.logger.info("Search stopped by stop_search flag")
 
         except Exception as e:
+            elapsed_time = time.time() - start_time
+            self.logger.error(f"Search error after {elapsed_time:.3f}s: {e}", exc_info=True)
             print(f"# Search error: {e}", file=sys.stderr)
+
             # Send a legal move as fallback
-            legal_moves = list(self.board.legal_moves)
+            legal_moves = list(board.legal_moves)
             if legal_moves:
-                print(f"bestmove {legal_moves[0].uci()}")
+                fallback_move = legal_moves[0].uci()
+                self.logger.warning(f"Using fallback move: {fallback_move}")
+                print(f"bestmove {fallback_move}")
+                sys.stdout.flush()
+                self.logger.debug(f"<<< bestmove {fallback_move}")
+            else:
+                self.logger.error("No legal moves available for fallback!")
 
         finally:
             self.searching = False
+            self.logger.debug("Search thread finished")
 
     def handle_stop(self):
         """
@@ -319,16 +449,26 @@ class UCIEngine:
         Sets stop_search flag and waits for search thread to finish.
         Search should return best move found so far.
         """
+        self.logger.info("Handling: stop")
         #TODO: implement stopping mid-search.
         self.stop_search = True
 
         if self.search_thread and self.search_thread.is_alive():
+            self.logger.debug("Waiting for search thread to finish (timeout=1.0s)")
             self.search_thread.join(timeout=1.0)
+            if self.search_thread.is_alive():
+                self.logger.warning("Search thread did not finish within timeout")
 
     def handle_quit(self):
         """Handle 'quit' command - shutdown engine."""
+        self.logger.info("Handling: quit - shutting down engine")
 
-        self.handle_stop()
+        # Wait for search to complete before quitting
+        if self.search_thread and self.search_thread.is_alive():
+            self.logger.debug("Waiting for search thread to complete before quitting")
+            self.search_thread.join()
+
+        self.logger.info("=== BarelyBlue Engine Stopped ===")
         sys.exit(0)
 
 

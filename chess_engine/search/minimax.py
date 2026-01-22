@@ -123,6 +123,7 @@ def minimax(
     evaluator: Evaluator,
     transposition_table: Optional[TranspositionTable] = None,
     ply_from_root: int = 0,
+    nodes_searched: Optional[List[int]] = None,
 ) -> float:
     """
     Minimax search with alpha-beta pruning.
@@ -140,6 +141,7 @@ def minimax(
         evaluator: Position evaluation function
         transposition_table: Optional cache for previously evaluated positions
         ply_from_root: Distance from root (for mate distance calculation)
+        nodes_searched: Optional mutable list [count] to track positions evaluated
 
     Returns:
         float: Evaluation of the position in centipawns
@@ -161,6 +163,9 @@ def minimax(
         then minimizing_player won't choose this branch (beta cutoff).
 
     """
+    if nodes_searched is not None:
+        nodes_searched[0] += 1
+
     # TODO: Implement transposition table lookup here
 
     # Base case: Reached leaf node (depth = 0)
@@ -194,6 +199,7 @@ def minimax(
                 evaluator,
                 transposition_table,
                 ply_from_root + 1,
+                nodes_searched,
             )
 
             board.pop()
@@ -223,6 +229,7 @@ def minimax(
                 evaluator,
                 transposition_table,
                 ply_from_root + 1,
+                nodes_searched,
             )
 
             board.pop()
@@ -243,7 +250,7 @@ def find_best_move(
     evaluator: Evaluator,
     transposition_table: Optional[TranspositionTable] = None,
     verbose: bool = False,
-) -> Tuple[chess.Move | None, float]:
+) -> Tuple[chess.Move | None, float, int, List[chess.Move]]:
     """
     Find the best move in the current position.
 
@@ -255,9 +262,11 @@ def find_best_move(
         verbose: If True, print search statistics
 
     Returns:
-        Tuple of (best_move, evaluation)
+        Tuple of (best_move, evaluation, nodes, pv)
             - best_move: The best move found
             - evaluation: Score of the best move
+            - nodes: Number of positions evaluated
+            - pv: Principal variation
 
     Raises:
         ValueError: If no legal moves available (game over)
@@ -273,7 +282,8 @@ def find_best_move(
 
     ordered_moves = order_moves(board, legal_moves)
 
-    nodes_searched = 0
+    nodes = [0]
+    pv = []
     # Search each move
     for move in ordered_moves:
         board.push(move)
@@ -289,6 +299,7 @@ def find_best_move(
                 evaluator,
                 transposition_table,
                 ply_from_root=1,
+                nodes_searched=nodes,
             )
         else:
             # Black to move: minimize score
@@ -301,26 +312,27 @@ def find_best_move(
                 evaluator,
                 transposition_table,
                 ply_from_root=1,
+                nodes_searched=nodes,
             )
 
         board.pop()
-
-        nodes_searched += 1
 
         if maximizing:
             if score > best_score:
                 best_score = score
                 best_move = move
+                pv = [move]
         else:
             if score < best_score:
                 best_score = score
                 best_move = move
+                pv = [move]
 
         if verbose:
             print(f"Move: {move}, Score: {score:.2f}")
 
     if verbose:
-        print(f"\nNodes searched: {nodes_searched}")
+        print(f"\nNodes searched: {nodes[0]}")
         print(f"Best move: {best_move}, Score: {best_score:.2f}")
 
-    return best_move, best_score
+    return best_move, best_score, nodes[0], pv

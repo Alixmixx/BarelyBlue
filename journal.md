@@ -5,6 +5,7 @@
 ## 2026-01-22: UCI protocol interface
 
 Implemented Universal Chess Interface protocol for GUI compatibility. Supports standard UCI commands (uci, isready, position, go, stop, quit). Uses threading to handle concurrent search and command processing. Engine can now be used with chess GUIs like Arena, En-croissant, or Lichess bots.
+Implementation of the logger and small updates to the chess_engine
 
 ## 2026-01-21: Minimax search with alpha-beta pruning and transposition tables
 
