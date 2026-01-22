@@ -2,6 +2,10 @@
 
 ---
 
+## 2026-01-22: UCI protocol interface
+
+Implemented Universal Chess Interface protocol for GUI compatibility. Supports standard UCI commands (uci, isready, position, go, stop, quit). Uses threading to handle concurrent search and command processing. Engine can now be used with chess GUIs like Arena, En-croissant, or Lichess bots.
+
 ## 2026-01-21: Minimax search with alpha-beta pruning and transposition tables
 
 Implemented core search algorithm using minimax with alpha-beta pruning to dramatically reduce nodes explored. Added transposition table using Zobrist hashing to cache previously evaluated positions. Move ordering (captures first, then checks, then quiet moves) improves pruning efficiency. Expected performance: depth 4-5 in 1-3 seconds.

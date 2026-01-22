@@ -1,0 +1,11 @@
+#!/bin/bash
+# BarelyBlue Chess Engine - UCI Interface
+# Entry point for UCI-compatible chess GUIs
+
+# Get the directory where this script is located
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# Activate virtual environment and run engine
+source "$DIR/.venv/bin/activate"
+cd "$DIR"
+python3 -m chess_engine.uci
