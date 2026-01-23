@@ -25,11 +25,12 @@ class TestMinimax:
 
         board = chess.Board("6k1/5ppp/8/8/8/8/8/R6K w - - 0 1")
 
-        best_move, score = find_best_move(board, depth=1, evaluator=evaluator)
+        best_move, score, nodes, pv = find_best_move(board, depth=1, evaluator=evaluator)
 
         assert (
             best_move.to_square == chess.H8 or best_move.to_square == chess.A8
         ), f"Should find mate with rook, got {best_move}"
+        assert nodes > 0, "Should search at least one node"
 
         board.push(best_move)
         assert board.is_checkmate(), f"Move {best_move} should be checkmate"
@@ -41,11 +42,12 @@ class TestMinimax:
             "rnbqkbnr/pppp1ppp/8/4p3/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 2"
         )
 
-        best_move, score = find_best_move(board, depth=3, evaluator=evaluator)
+        best_move, score, nodes, pv = find_best_move(board, depth=3, evaluator=evaluator)
 
         expected_move = chess.Move.from_uci("d8h4")
 
         assert best_move == expected_move, f"Should find Qh4#, got {best_move}"
+        assert nodes > 0, "Should search at least one node"
 
         board.push(best_move)
         assert board.is_checkmate(), "Qh4 should be checkmate"
@@ -57,23 +59,25 @@ class TestMinimax:
             "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 1"
         )
 
-        move_d2, score_d2 = find_best_move(board, depth=2, evaluator=evaluator)
-        move_d4, score_d4 = find_best_move(board, depth=4, evaluator=evaluator)
+        move_d2, score_d2, nodes_d2, pv_d2 = find_best_move(board, depth=2, evaluator=evaluator)
+        move_d4, score_d4, nodes_d4, pv_d4 = find_best_move(board, depth=4, evaluator=evaluator)
 
         assert move_d2 in board.legal_moves
         assert move_d4 in board.legal_moves
+        assert nodes_d4 > nodes_d2, "Deeper search should explore more nodes"
 
     def test_alpha_beta_correctness(self, evaluator):
         """Test that alpha-beta pruning produces same result as full minimax."""
 
         board = chess.Board()
 
-        best_move, score = find_best_move(board, depth=3, evaluator=evaluator)
+        best_move, score, nodes, pv = find_best_move(board, depth=3, evaluator=evaluator)
 
-        best_move2, score2 = find_best_move(board, depth=3, evaluator=evaluator)
+        best_move2, score2, nodes2, pv2 = find_best_move(board, depth=3, evaluator=evaluator)
 
         assert best_move == best_move2, "Alpha-beta should be deterministic"
         assert score == score2, "Scores should match"
+        assert nodes > 0 and nodes2 > 0, "Should search at least one node"
 
     def test_no_legal_moves_raises_error(self, evaluator):
         """Test that search handles game-over positions."""
@@ -164,11 +168,12 @@ class TestTranspositionTable:
         board = chess.Board()
 
         tt1 = TranspositionTable(max_size=1000000)
-        move1, score1 = find_best_move(
+        move1, score1, nodes1, pv1 = find_best_move(
             board, depth=4, evaluator=evaluator, transposition_table=tt1
         )
 
         assert move1 in board.legal_moves
+        assert nodes1 > 0, "Should search at least one node"
 
     def test_clear_table(self):
         """Test that clearing table removes all entries."""
@@ -246,7 +251,7 @@ class TestSearchIntegration:
             if board.is_game_over():
                 break
 
-            best_move, score = find_best_move(
+            best_move, score, nodes, pv = find_best_move(
                 board,
                 depth=3,  # Shallow depth for speed
                 evaluator=evaluator,
@@ -256,6 +261,7 @@ class TestSearchIntegration:
             assert (
                 best_move in board.legal_moves
             ), f"Search returned illegal move: {best_move}"
+            assert nodes > 0, "Should search at least one node"
 
             board.push(best_move)
 
@@ -266,7 +272,8 @@ class TestSearchIntegration:
             "rnbqkbnr/pppppppp/8/8/8/3Q4/PPPPPPPP/RNB1KBNR w KQkq - 0 1"
         )
 
-        best_move, score = find_best_move(board, depth=3, evaluator=evaluator)
+        best_move, score, nodes, pv = find_best_move(board, depth=3, evaluator=evaluator)
 
         # Should capture the hanging piece
         assert best_move in board.legal_moves
+        assert nodes > 0, "Should search at least one node"
