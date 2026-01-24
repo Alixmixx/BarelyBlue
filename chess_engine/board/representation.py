@@ -2,16 +2,24 @@
 Board Representation for Neural Network Input
 
 This module converts python-chess Board objects into tensor representations
-that can be fed into neural networks. The standard representation uses 12
-binary channels (6 piece types * 2 colors).
+that can be fed into neural networks.
 
-Channel Layout (12 channels):
+12-Channel Representation (piece positions only):
     0: White Pawns      6: Black Pawns
     1: White Knights    7: Black Knights
     2: White Bishops    8: Black Bishops
     3: White Rooks      9: Black Rooks
     4: White Queens    10: Black Queens
     5: White Kings     11: Black Kings
+
+18-Channel Representation (pieces + metadata):
+    0-11: Same as above (piece positions)
+    12: White kingside castling rights
+    13: White queenside castling rights
+    14: Black kingside castling rights
+    15: Black queenside castling rights
+    16: En passant target square (1 at target square, 0 elsewhere)
+    17: Side to move (all 1s if White, all 0s if Black)
 
 Each channel is an 8*8 binary mask where 1 indicates piece presence.
 
@@ -158,13 +166,64 @@ def tensor_to_board(tensor: np.ndarray) -> chess.Board:
     return board
 
 
+def board_to_tensor_18(board: chess.Board) -> np.ndarray:
+    """
+    Convert board to 18-channel tensor with metadata planes.
+
+    Channels 0-11: Piece positions (from board_to_tensor)
+    Channel 12: White kingside castling (all 1s if available)
+    Channel 13: White queenside castling (all 1s if available)
+    Channel 14: Black kingside castling (all 1s if available)
+    Channel 15: Black queenside castling (all 1s if available)
+    Channel 16: En passant target square (1 at target square)
+    Channel 17: Side to move (all 1s for White, all 0s for Black)
+
+    Args:
+        board: python-chess Board object
+
+    Returns:
+        numpy array of shape (18, 8, 8) with dtype float32
+    """
+    # Get base 12-channel representation
+    tensor_12 = board_to_tensor(board)
+
+    # Create 6 metadata planes
+    metadata = np.zeros((6, 8, 8), dtype=np.float32)
+
+    # Castling rights (all squares 1.0 if right available)
+    if board.has_kingside_castling_rights(chess.WHITE):
+        metadata[0, :, :] = 1.0
+
+    if board.has_queenside_castling_rights(chess.WHITE):
+        metadata[1, :, :] = 1.0
+
+    if board.has_kingside_castling_rights(chess.BLACK):
+        metadata[2, :, :] = 1.0
+
+    if board.has_queenside_castling_rights(chess.BLACK):
+        metadata[3, :, :] = 1.0
+
+    # En passant target square
+    if board.ep_square is not None:
+        row, col = square_to_coordinates(board.ep_square)
+        metadata[4, row, col] = 1.0
+
+    # Side to move (all 1s for White, all 0s for Black)
+    if board.turn == chess.WHITE:
+        metadata[5, :, :] = 1.0
+
+    return np.concatenate([tensor_12, metadata], axis=0)
+
+
 def add_metadata_planes(tensor: np.ndarray, board: chess.Board) -> np.ndarray:
     """
     Add metadata planes to tensor representation.
+    
+    Args:
+        tensor: Unused (kept for API compatibility)
+        board: Chess board to convert
 
     Returns:
         Extended tensor with shape (18, 8, 8)
-
-    TODO: Implement when training neural network
     """
-    raise NotImplementedError("Metadata not implemented")
+    return board_to_tensor_18(board)
