@@ -32,3 +32,15 @@ flake8>=6.0.0
     # Linting
 mypy>=1.0.0
     # Type checking
+
+h5py>=3.9.0
+    # HDF5 file format for efficient dataset storage
+
+stockfish>=3.28.0
+    # Python wrapper for Stockfish chess engine
+
+tqdm>=4.66.0
+    # Progress bars
+
+pandas>=2.0.0
+    # Data analysis

@@ -1,0 +1,69 @@
+[Event "Rated Blitz game"]
+[Site "https://lichess.org/abc123"]
+[Date "2024.01.15"]
+[Round "-"]
+[White "Player1"]
+[Black "Player2"]
+[Result "1-0"]
+[WhiteElo "2200"]
+[BlackElo "2150"]
+[TimeControl "180+2"]
+[Termination "Normal"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 d6 8. c3 O-O 9. h3 Na5 10. Bc2 c5 11. d4 Qc7 1-0
+
+[Event "Rated Rapid game"]
+[Site "https://lichess.org/xyz456"]
+[Date "2024.01.16"]
+[Round "-"]
+[White "Player3"]
+[Black "Player4"]
+[Result "0-1"]
+[WhiteElo "2300"]
+[BlackElo "2400"]
+[TimeControl "600+5"]
+[Termination "Normal"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 O-O 6. Be2 e5 7. O-O Nc6 8. d5 Ne7 9. Ne1 Nd7 10. Nd3 f5 11. Bd2 Nf6 12. f3 f4 0-1
+
+[Event "Rated Blitz game"]
+[Site "https://lichess.org/def789"]
+[Date "2024.01.17"]
+[Round "-"]
+[White "Beginner1"]
+[Black "Beginner2"]
+[Result "1/2-1/2"]
+[WhiteElo "1500"]
+[BlackElo "1550"]
+[TimeControl "180+0"]
+[Termination "Normal"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 d5 5. exd5 Nxd5 6. Nxf7 Kxf7 7. Qf3+ Ke6 1/2-1/2
+
+[Event "Casual game"]
+[Site "https://lichess.org/ghi012"]
+[Date "2024.01.18"]
+[Round "-"]
+[White "Player5"]
+[Black "Player6"]
+[Result "1-0"]
+[WhiteElo "?"]
+[BlackElo "2100"]
+[TimeControl "-"]
+[Termination "Normal"]
+
+1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 6. Be3 e5 7. Nb3 Be6 8. f3 Be7 9. Qd2 O-O 10. O-O-O Nbd7 1-0
+
+[Event "Rated Classical game"]
+[Site "https://lichess.org/jkl345"]
+[Date "2024.01.19"]
+[Round "-"]
+[White "GrandMaster1"]
+[Black "GrandMaster2"]
+[Result "1/2-1/2"]
+[WhiteElo "2650"]
+[BlackElo "2680"]
+[TimeControl "2700+15"]
+[Termination "Normal"]
+
+1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 6. Be3 e5 7. Nb3 Be6 8. f3 Be7 9. Qd2 O-O 10. O-O-O Nbd7 11. g4 b5 12. g5 b4 13. Ne2 Ne8 14. f4 a5 15. f5 a4 16. Nbd4 exd4 17. Nxd4 b3 18. Kb1 bxc2+ 19. Qxc2 Rc8 1/2-1/2
