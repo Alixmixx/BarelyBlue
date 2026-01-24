@@ -124,6 +124,7 @@ def minimax(
     transposition_table: Optional[TranspositionTable] = None,
     ply_from_root: int = 0,
     nodes_searched: Optional[List[int]] = None,
+    should_stop: Optional[callable] = None,
 ) -> float:
     """
     Minimax search with alpha-beta pruning.
@@ -163,6 +164,10 @@ def minimax(
         then minimizing_player won't choose this branch (beta cutoff).
 
     """
+    # Check if search should be stopped
+    if should_stop and should_stop():
+        return evaluator.evaluate(board)
+
     if nodes_searched is not None:
         nodes_searched[0] += 1
 
@@ -200,6 +205,7 @@ def minimax(
                 transposition_table,
                 ply_from_root + 1,
                 nodes_searched,
+                should_stop,
             )
 
             board.pop()
@@ -230,6 +236,7 @@ def minimax(
                 transposition_table,
                 ply_from_root + 1,
                 nodes_searched,
+                should_stop,
             )
 
             board.pop()
@@ -250,6 +257,7 @@ def find_best_move(
     evaluator: Evaluator,
     transposition_table: Optional[TranspositionTable] = None,
     verbose: bool = False,
+    should_stop: Optional[callable] = None,
 ) -> Tuple[chess.Move | None, float, int, List[chess.Move]]:
     """
     Find the best move in the current position.
@@ -286,6 +294,10 @@ def find_best_move(
     pv = []
     # Search each move
     for move in ordered_moves:
+        # Check if we should stop before searching this move
+        if should_stop and should_stop():
+            break
+
         board.push(move)
 
         if maximizing:
@@ -300,6 +312,7 @@ def find_best_move(
                 transposition_table,
                 ply_from_root=1,
                 nodes_searched=nodes,
+                should_stop=should_stop,
             )
         else:
             # Black to move: minimize score
@@ -313,6 +326,7 @@ def find_best_move(
                 transposition_table,
                 ply_from_root=1,
                 nodes_searched=nodes,
+                should_stop=should_stop,
             )
 
         board.pop()

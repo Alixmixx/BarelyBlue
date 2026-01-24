@@ -386,41 +386,43 @@ class UCIEngine:
                 depth,
                 self.evaluator,
                 self.transposition_table,
+                should_stop=lambda: self.stop_search,
             )
 
             elapsed_ms = int((time.time() - start_time) * 1000)
-            self.logger.info(f"Search complete: best_move={best_move.uci() if best_move else 'None'}, score={score:.2f}, nodes={nodes_searched}, time={elapsed_ms}ms")
 
-            # Send result
-            if not self.stop_search:
-                if best_move:
-                    # Build complete UCI info string with all required fields
-                    info_parts = [
-                        "info",
-                        f"depth {depth}",
-                        f"seldepth {depth}",
-                        f"score cp {int(score)}",
-                        f"nodes {nodes_searched}",
-                        f"time {elapsed_ms}",
-                    ]
-
-                    if pv and len(pv) > 0:
-                        pv_moves = " ".join([m.uci() for m in pv])
-                        info_parts.append(f"pv {pv_moves}")
-
-                    info_msg = " ".join(info_parts)
-                    bestmove_msg = f"bestmove {best_move.uci()}"
-
-                    print(info_msg)
-                    print(bestmove_msg)
-                    sys.stdout.flush()
-
-                    self.logger.debug(f"<<< {info_msg}")
-                    self.logger.debug(f"<<< {bestmove_msg}")
-                else:
-                    self.logger.error("Search returned None for best_move!")
+            if self.stop_search:
+                self.logger.info(f"Search stopped early: best_move={best_move.uci() if best_move else 'None'}, score={score:.2f}, nodes={nodes_searched}, time={elapsed_ms}ms")
             else:
-                self.logger.info("Search stopped by stop_search flag")
+                self.logger.info(f"Search complete: best_move={best_move.uci() if best_move else 'None'}, score={score:.2f}, nodes={nodes_searched}, time={elapsed_ms}ms")
+
+            # Send result - always send best move found, even if stopped early
+            if best_move:
+                # Build complete UCI info string with all required fields
+                info_parts = [
+                    "info",
+                    f"depth {depth}",
+                    f"seldepth {depth}",
+                    f"score cp {int(score)}",
+                    f"nodes {nodes_searched}",
+                    f"time {elapsed_ms}",
+                ]
+
+                if pv and len(pv) > 0:
+                    pv_moves = " ".join([m.uci() for m in pv])
+                    info_parts.append(f"pv {pv_moves}")
+
+                info_msg = " ".join(info_parts)
+                bestmove_msg = f"bestmove {best_move.uci()}"
+
+                print(info_msg)
+                print(bestmove_msg)
+                sys.stdout.flush()
+
+                self.logger.debug(f"<<< {info_msg}")
+                self.logger.debug(f"<<< {bestmove_msg}")
+            else:
+                self.logger.error("Search returned None for best_move!")
 
         except Exception as e:
             elapsed_time = time.time() - start_time
@@ -447,15 +449,14 @@ class UCIEngine:
         Handle 'stop' command - stop ongoing search.
 
         Sets stop_search flag and waits for search thread to finish.
-        Search should return best move found so far.
+        Search will return best move found so far.
         """
         self.logger.info("Handling: stop")
-        #TODO: implement stopping mid-search.
         self.stop_search = True
 
         if self.search_thread and self.search_thread.is_alive():
-            self.logger.debug("Waiting for search thread to finish (timeout=1.0s)")
-            self.search_thread.join(timeout=1.0)
+            self.logger.debug("Waiting for search thread to finish (timeout=5.0s)")
+            self.search_thread.join(timeout=5.0)
             if self.search_thread.is_alive():
                 self.logger.warning("Search thread did not finish within timeout")
 
