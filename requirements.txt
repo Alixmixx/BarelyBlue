@@ -44,3 +44,11 @@ tqdm>=4.66.0
 
 pandas>=2.0.0
     # Data analysis
+
+# Neural Network Training
+torch>=2.0.0
+    # PyTorch for neural network training
+torchvision>=0.15.0
+    # Vision utilities
+tensorboard>=2.14.0
+    # Training visualization and logging
