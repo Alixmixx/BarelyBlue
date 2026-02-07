@@ -2,6 +2,10 @@
 
 ---
 
+## 2026-02-07: First Training Run - Pipeline Validation
+
+Successfully completed first end-to-end training run to validate the entire pipeline. Generated dataset of 10K positions from Lichess Dec 2025 PGN (205GB source) using Stockfish depth 15 labeling. Training took ~30 minutes for dataset generation + ~12 minutes for model training. Small model (3 blocks, 64 channels, 759K parameters) trained for 14 epochs before early stopping. Results: best validation loss 0.0147 at epoch 4, sign accuracy ~52% (barely above random). Clear overfitting observed - train loss dropped to 0.011 while validation loss climbed to 0.022. Root cause: 10K positions insufficient for 759K parameter model to generalize. Pipeline validated end-to-end: PGN parsing -> Stockfish labeling -> HDF5 storage -> PyTorch training -> checkpointing all working correctly. TensorBoard logs and model checkpoints saved to `models/small_3b64ch/`. Next step: scale up to 100K-500K positions for meaningful training.
+
 ## 2026-01-26: Training Loop and Checkpointing
 
 Implemented ChessTrainer for complete training pipeline. Features: training loop with tqdm progress bars, validation with sign accuracy metric (correctly predicting winning side), MSE loss optimization, Adam optimizer with weight decay, ReduceLROnPlateau scheduler, early stopping based on validation loss, checkpoint saving (regular + best model), TensorBoard logging. Created CLI tool (tools/train_model.py) for model training with argparse interface. Handles checkpoint resume, configurable hyperparameters, and graceful interruption. Test suite: 16 tests (epoch training, validation, checkpointing, early stopping, LR scheduling, device placement). Total: 170 tests passing (12 skipped).

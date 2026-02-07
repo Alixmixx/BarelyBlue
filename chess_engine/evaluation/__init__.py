@@ -20,5 +20,6 @@ Data Flow:
 
 from chess_engine.evaluation.base import Evaluator
 from chess_engine.evaluation.classical import ClassicalEvaluator
+from chess_engine.evaluation.neural import NeuralEvaluator
 
-__all__ = ['Evaluator', 'ClassicalEvaluator']
+__all__ = ['Evaluator', 'ClassicalEvaluator', 'NeuralEvaluator']
