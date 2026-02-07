@@ -10,6 +10,7 @@ This module provides PyTorch-based training infrastructure including:
 from chess_engine.training.dataset import ChessDataset
 from chess_engine.training.config import TrainingConfig
 from chess_engine.training.model import ChessNet, ResidualBlock, create_model
+from chess_engine.training.trainer import ChessTrainer
 
 __all__ = [
     "ChessDataset",
@@ -17,4 +18,5 @@ __all__ = [
     "ChessNet",
     "ResidualBlock",
     "create_model",
+    "ChessTrainer",
 ]

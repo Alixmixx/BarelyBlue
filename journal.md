@@ -2,6 +2,10 @@
 
 ---
 
+## 2026-01-26: Training Loop and Checkpointing
+
+Implemented ChessTrainer for complete training pipeline. Features: training loop with tqdm progress bars, validation with sign accuracy metric (correctly predicting winning side), MSE loss optimization, Adam optimizer with weight decay, ReduceLROnPlateau scheduler, early stopping based on validation loss, checkpoint saving (regular + best model), TensorBoard logging. Created CLI tool (tools/train_model.py) for model training with argparse interface. Handles checkpoint resume, configurable hyperparameters, and graceful interruption. Test suite: 16 tests (epoch training, validation, checkpointing, early stopping, LR scheduling, device placement). Total: 170 tests passing (12 skipped).
+
 ## 2026-01-26: ResNet Model Architecture
 
 Implemented ChessNet ResNet architecture for chess position evaluation. Created ResidualBlock with skip connections (Conv->BN->ReLU->Conv->BN->(+x)->ReLU) for gradient flow through deep networks. ChessNet takes 18-channel board tensors (12 piece planes + 6 metadata), processes through configurable residual tower (3/5/10/15/20 blocks), and outputs scalar evaluation in [-1, 1] via tanh. Value head uses 1x1 conv + dense layers. Model sizes: small (~750K params), medium (~2M params), large (~12M params). Added create_model() factory function for preset configurations. Architecture inspired by AlphaZero.
